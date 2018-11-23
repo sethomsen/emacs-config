@@ -1,0 +1,26 @@
+# -*- mode: snippet -*-
+# key: auhandin
+# group: skeleton
+# name: auhandin
+# --
+
+\documentclass[a4paper,10pt,oneside,article]{memoir}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+
+
+\checkandfixthelayout
+\setlrmarginsandblock{3cm}{3cm}{*}
+
+\title{${1:Title} \\\\ ${2:Course}}
+\author{Søren Eller Thomsen \\\\ Student ID: 201404431}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{${3:Section}}
+${4:content}
+
+\end{document}

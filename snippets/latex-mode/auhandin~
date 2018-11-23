@@ -1,0 +1,28 @@
+# -*- mode: snippet -*-
+# key: auhandin
+# group: skeleton
+# name: auhandin
+# --
+\documentclass[a4paper,10pt,oneside,article]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[${1:language}]{babel}
+
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+
+\makeoddhead{plain}{${2:Course}}{}{Aarhus University}
+\makeoddfoot{plain}{}{\thepage}{}
+
+\setlrmarginsandblock{3.5cm}{3.5cm}{*}
+\checkandfixthelayout
+
+\title{${3:Title}}
+\author{Simon Oddershede Gregersen \\\\ stud.no. \texttt{201406163}}
+\date{${4:Date}}
+
+\begin{document}
+\maketitle
+\section*{${5:Section}}
+${0:content}
+
+\end{document}
