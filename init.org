@@ -329,7 +329,9 @@ This only works if ispell is installed.
     :defer t
     :config
     (setq mouse-wheel-follow-mouse t)
-    (setq pdf-view-resize-factor 0.5))
+    (setq pdf-view-resize-factor 0.5)
+    (add-hook 'pdf-view-mode-hook (lambda() (linum-mode -1)))
+    )
 
   (defun run-latex ()
     (interactive)

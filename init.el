@@ -86,7 +86,7 @@
 (blink-cursor-mode 0)                ; disable blinking cursor
 
 (mouse-avoidance-mode 'jump)         ; jump mouse away when typing
-(setq visible-bell nil)                ; turn off bip warnings
+(setq visible-bell nil)              ; turn off bip warnings
 (auto-compression-mode 1)            ; browse tar archives
 (put 'upcase-region 'disabled nil)   ; enable ``upcase-region''
 (put 'set-goal-column 'disabled nil) ; enable column positioning
@@ -99,6 +99,8 @@
 (delete-selection-mode +1)           ; type over a selected region, instead of deleting before typing.
 (add-to-list 'default-frame-alist '(fullscreen . maximized)) ; start full screen
 (global-auto-revert-mode t)          ; automatically reload buffers when file has changed
+(global-hl-line-mode t)              ; line highlight
+(global-linum-mode t)                ; enable line numbers globally
 
 (global-unset-key (kbd "<M-drag-mouse-1>"))   ; was mouse-set-secondary
 (global-unset-key (kbd "<M-down-mouse-1>"))   ; was mouse-drag-secondary
@@ -107,8 +109,6 @@
 (global-unset-key (kbd "<M-mouse-3>"))        ; was mouse-secondary-save-then-kill
 
 (setq default-directory "~/Documents/")        ; set default directory to be documents
-
-(global-hl-line-mode +1)
 
 (use-package ivy
   :demand
@@ -180,8 +180,8 @@
   :init
   (load-theme 'doom-vibrant t)
   (doom-themes-neotree-config))
-(set-cursor-color "#FF0000")         ; Set cursor color to red
-(set-face-attribute 'hl-line nil :inherit nil :background "#6A0000")
+(set-cursor-color "#FF0000")         ; set cursor color to red
+(set-face-attribute 'hl-line nil :inherit nil :background "#6A0000") ; set hightline line color to red-ish
 
 (use-package company
   :config
@@ -252,7 +252,9 @@
   :defer t
   :config
   (setq mouse-wheel-follow-mouse t)
-  (setq pdf-view-resize-factor 0.5))
+  (setq pdf-view-resize-factor 0.5)
+  (add-hook 'pdf-view-mode-hook (lambda() (linum-mode -1)))
+  )
 
 (defun run-latex ()
   (interactive)
