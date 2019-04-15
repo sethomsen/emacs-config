@@ -4,15 +4,15 @@
 # name: auhandin
 # --
 
-\documentclass[a4paper,10pt,oneside,article]{memoir}
+\documentclass[a4paper, 11pt]{article}
 \usepackage[utf8]{inputenc}
 
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 
+\usepackage{geometry}
+\geometry{margin=3cm}
 
-\checkandfixthelayout
-\setlrmarginsandblock{3cm}{3cm}{*}
 
 \title{${1:Title} \\\\ ${2:Course}}
 \author{Søren Eller Thomsen \\\\ Student ID: 201404431}

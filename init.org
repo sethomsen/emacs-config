@@ -141,13 +141,14 @@
 (global-auto-revert-mode t)          ; automatically reload buffers when file has changed
 (global-hl-line-mode t)              ; line highlight
 (global-linum-mode t)                ; enable line numbers globally
-
+(global-subword-mode t)              ; enable subword mode globally
 (global-unset-key (kbd "<M-drag-mouse-1>"))   ; was mouse-set-secondary
 (global-unset-key (kbd "<M-down-mouse-1>"))   ; was mouse-drag-secondary
 (global-unset-key (kbd "<M-mouse-1>"))        ; was mouse-start-secondary
 (global-unset-key (kbd "<M-mouse-2>"))        ; was mouse-yank-secondary
 (global-unset-key (kbd "<M-mouse-3>"))        ; was mouse-secondary-save-then-kill
 
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))) ; set backup directory
 (setq default-directory "~/Documents/")        ; set default directory to be documents
 
 
@@ -222,6 +223,76 @@
    ))
 #+END_SRC
 
+** Avy
+#+BEGIN_SRC emacs-lisp
+(use-package avy
+  :demand
+  :bind* (("C-,"     . avy-pop-mark)
+          ("M-j"     . avy-goto-char)
+          ("M-k"     . avy-goto-word-1)
+          ("M-g n"   . avy-resume)
+          ("M-g w"   . avy-goto-word-1)
+          ("M-g f"   . avy-goto-line)
+          ("M-g l c" . avy-copy-line)
+          ("M-g l m" . avy-move-line)
+          ("M-g r c" . avy-copy-region)
+          ("M-g r m" . avy-move-region)
+          ("M-g p"   . avy-goto-paren)
+          ("M-g c"   . avy-goto-conditional)
+          ("M-g M-g" . avy-goto-line))
+  :config
+  (defun avy-goto-paren ()
+    (interactive)
+    (avy--generic-jump "\\s(" nil 'pre))
+  (defun avy-goto-conditional ()
+    (interactive)
+    (avy--generic-jump "\\s(\\(if\\|cond\\|when\\|unless\\)\\b" nil 'pre))
+  (setq avy-timeout-seconds 0.3)
+  (setq avy-all-windows 'all-frames)
+  (defun avy-action-copy-and-yank (pt)
+    "Copy and yank sexp starting on PT."
+    (avy-action-copy pt)
+    (yank))
+  (defun avy-action-kill-and-yank (pt)
+    "Kill and yank sexp starting on PT."
+    (avy-action-kill-stay pt)
+    (yank))
+  (setq avy-dispatch-alist
+        '((?w . avy-action-copy)
+          (?k . avy-action-kill-move)
+          (?u . avy-action-kill-stay)
+          (?m . avy-action-mark)
+          (?n . avy-action-copy)
+          (?y . avy-action-copy-and-yank)
+          (?Y . avy-action-kill-and-yank)))
+  ;; (setq avy-keys
+  ;;       '(?c ?a ?s ?d ?e ?f ?h ?w ?y ?j ?k ?l ?n ?m ?v ?r ?u ?p))
+  )
+#+END_SRC
+
+** Ace window
+#+BEGIN_SRC emacs-lisp
+(use-package ace-window
+  :bind* ("C-x o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?j ?k ?l))
+  (setq aw-scope 'global)
+  (defun aw-switch-buffer (window)
+    "Swift buffer in WINDOW."
+    (select-window window)
+    (ivy-switch-buffer))
+  (setq aw-dispatch-alist
+     '((?x aw-delete-window " Ace - Delete Window")
+       (?m aw-swap-window " Ace - Swap Window")
+       (?n aw-flip-window)
+       (?c aw-split-window-fair " Ace - Split Fair Window")
+       (?v aw-split-window-vert " Ace - Split Vert Window")
+       (?h aw-split-window-horz " Ace - Split Horz Window")
+       (?i delete-other-windows " Ace - Maximize Window")
+       (?b aw-switch-buffer " Ace - Switch Buffer")
+       (?o delete-other-windows))))
+
+#+END_SRC
 * Appearance
 ** Fonts
 ** Doom themes
@@ -446,6 +517,7 @@ This only works if ispell is installed.
   :config
   ;; remove splash screen
   (setq proof-splash-seen t)
+  (setq max-specpdl-size 13000)
   ;; window-mode setup
   (setq proof-three-window-mode-policy 'hybrid)
   ;; fly past comments when stepping forwads/backwards in proof
@@ -455,7 +527,9 @@ This only works if ispell is installed.
   (defun my/coq-mode-setup ()
     ;; forward and backward shortcuts
     (define-key coq-mode-map (kbd "M-n") #'proof-assert-next-command-interactive)
-    (define-key coq-mode-map (kbd "M-p") #'proof-undo-last-successful-command))
+    (define-key coq-mode-map (kbd "M-p") #'proof-undo-last-successful-command)
+    (define-key coq-mode-map (kbd "C-x p") #'proof-three-window-toggle)
+    )
   (add-hook 'coq-mode-hook #'my/coq-mode-setup))
 
 (use-package company-coq
@@ -476,7 +550,22 @@ This only works if ispell is installed.
 
 ** Haskell
 #+BEGIN_SRC emacs-lisp
-(use-package haskell-mode)
+;; (use-package haskell-interactive-mode
+;;   :ensure t)
+;; (use-package haskell-process
+;;   :ensure t)
+(use-package haskell-mode
+  :ensure t
+  :config
+  (defun my/haskell-mode-setup ()
+    (define-key haskell-mode-map (kbd "C-c C-c") 'haskell-compile))
+  (add-hook 'haskell-mode-hook #'my/haskell-mode-setup)
+  (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+  (custom-set-variables
+   '(haskell-process-suggest-remove-import-lines t)
+   '(haskell-process-suggest-hoogle-imports t)
+   '(haskell-process-log t))
+)
 #+END_SRC
 
 ** Idris
@@ -533,6 +622,13 @@ This only works if ispell is installed.
   (setq markdown-command "multimarkdown")
   :config
   (add-hook 'markdown-mode-hook 'flyspell-mode))
+#+END_SRC
+
+** OCaml
+#+BEGIN_SRC emacs-lisp
+(use-package tuareg
+  :ensure t
+  :config)
 #+END_SRC
 
 * Extras
@@ -596,11 +692,14 @@ This only works if ispell is installed.
 
 (global-set-key (kbd "<C-S-down>") 'move-line-down)
 (global-set-key (kbd "<C-S-up>") 'move-line-up)
+(global-set-key (kbd "C-x y") 'string-insert-rectangle)
 
 (setq compilation-read-command nil)
-(global-set-key (kbd "C-c m") 'compile)
 
+(global-set-key (kbd "C-c m") 'compile)
+(global-set-key (kbd "M-*") 'pop-tag-mark)
 (global-set-key (kbd "M-l") 'whack-whitespace)
+(global-set-key (kbd "C-c C-y") 'string-insert-rectangle)
 #+END_SRC
 
 ** Show lines when prompting
