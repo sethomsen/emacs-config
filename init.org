@@ -158,6 +158,7 @@
 ** Ivy + Swiper + Counsel
 #+BEGIN_SRC emacs-lisp
 (use-package ivy
+  :ensure t
   :demand
   :config
   (setq ivy-use-virtual-buffers t)
@@ -630,6 +631,14 @@ This only works if ispell is installed.
   :ensure t
   :config)
 #+END_SRC
+
+** Go
+#+BEGIN_SRC emacs-lisp
+(use-package go-mode
+  :ensure t
+  :config)
+#+END_SRC
+
 
 * Extras
 ** Functions
