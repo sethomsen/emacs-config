@@ -12,6 +12,10 @@
 
 \usepackage{geometry}
 \geometry{margin=3cm}
+\usepackage{hyperref}
+\usepackage[capitalize]{cleveref}
+
+
 
 
 \title{${1:Title} \\\\ ${2:Course}}
