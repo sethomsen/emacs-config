@@ -186,7 +186,6 @@
 		(read (current-buffer)))))
     (message "load ivy-views"))
   (load-ivy-views)
-  ;; (set-face-attribute 'ivy-current-match nil :background "#8a2720")
   (custom-set-faces
    '(ivy-current-match
      ((((class color) (background light))
@@ -204,7 +203,8 @@
   :demand
   :defer t
   :bind*
-  (( "C-s" . counsel-grep-or-swiper)
+  (
+   ( "C-s" . counsel-grep-or-swiper)
    ( "M-g g" . counsel-rg)
    ( "M-i" . counsel-imenu)
    ( "M-x" . counsel-M-x)
@@ -450,7 +450,7 @@ This only works if ispell is installed.
 
   (add-hook 'LaTeX-mode-hook
 	    (lambda ()
-	      ;; (local-set-key (kbd "<C-return>") (lambda () (Tex-command-menu "LaTeX")))
+	      ;; (local-set-key (kbd "<C-return>") (lambda () (Tex-command-menu "LaTeX"))) 
 	      (company-mode)
 	      ;; (visual-line-mode)
 	      (flyspell-mode)
@@ -504,6 +504,11 @@ This only works if ispell is installed.
   :defer t
   :config
   (setq reftex-cite-prompt-optional-args t)); Prompt for empty optional arguments in cite
+
+(use-package biblio
+  :ensure t )
+
+
 #+END_SRC
 
 ** Magit
@@ -545,6 +550,9 @@ This only works if ispell is installed.
   (setq proof-script-fly-past-comments t)
   ;; compile dependencies before Require
   (setq coq-compile-before-require t)
+  ;; Remove the colour
+  ;; (setq proof-colour-locked nil)
+  ;; 
   (defun my/coq-mode-setup ()
     ;; forward and backward shortcuts
     (define-key coq-mode-map (kbd "M-n") #'proof-assert-next-command-interactive)
@@ -552,6 +560,7 @@ This only works if ispell is installed.
     (define-key coq-mode-map (kbd "C-x p") #'proof-three-window-toggle)
     )
   (add-hook 'coq-mode-hook #'my/coq-mode-setup)
+  
   )
 
 (use-package company-coq
@@ -634,7 +643,15 @@ This only works if ispell is installed.
   (setq inferior-lisp-program "/usr/local/bin/sbcl")
   (setq slime-contribs '(slime-fancy)))
 #+END_SRC
-
+** Elisp
+#+BEGIN_SRC emacs-lisp
+(use-package elisp-slime-nav
+  :ensure t
+  :config 
+  (dolist (hook '(emacs-lisp-mode-hook ielm-mode-hook))
+    (add-hook hook 'elisp-slime-nav-mode))
+)
+#+END_SRC 
 ** Markdown
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
@@ -647,7 +664,12 @@ This only works if ispell is installed.
   (setq markdown-command "multimarkdown")
   :config
   (add-hook 'markdown-mode-hook 'flyspell-mode))
-#+END_SRC
+#+END_SRC 
+
+*** Markdown custom preview
+#+BEGIN_SRC emacs-lisp
+(load-file "~/.emacs.d/md-preview.el")
+#+END_SRC 
 
 ** OCaml
 #+BEGIN_SRC emacs-lisp
@@ -684,7 +706,7 @@ This only works if ispell is installed.
     word."
   (interactive)
   (let ((regexp (if 1 "[ \t\n]+" "[ \t]+")))
-    (re-search-forward regexp nil t)
+n    (re-search-forward regexp nil t)
     (replace-match "" nil nil)))
 
 (defun kill-whitespace ()
@@ -812,5 +834,18 @@ This only works if ispell is installed.
 ;;         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
 ;;         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 
+
+#+END_SRC
+
+** BibTeX
+#+BEGIN_SRC emacs-lisp
+(define-minor-mode dblp-mode
+  "Provide shortcuts for quering dblp."
+  :keymap (let ((map (make-sparse-keymap)))
+            (define-key map (kbd "M-s d") 'biblio-dblp-lookup)
+            map)
+  )
+(provide dblp-mode)
+(add-hook 'bibtex-mode-hook 'dblp-mode)
 
 #+END_SRC
