@@ -93,15 +93,15 @@
 (when (boundp 'mac-pass-command-to-system)
       (setq mac-pass-command-to-system nil))
 
-(defun toggle-fullscreen (&optional f)
-  (interactive)
-  (let ((current-value (frame-parameter nil 'fullscreen)))
-    (set-frame-parameter nil 'fullscreen
-      (if (equal 'fullboth current-value)
-	(if (boundp 'old-fullscreen) old-fullscreen nil)
-	(progn (setq old-fullscreen current-value)
-	  'fullboth)))))
-(global-set-key [f12] 'toggle-frame-fullscreen)
+;; (defun toggle-fullscreen (&optional f)
+;;   (interactive)
+;;   (let ((current-value (frame-parameter nil 'fullscreen)))
+;;     (set-frame-parameter nil 'fullscreen
+;;       (if (equal 'fullboth current-value)
+;; 	(if (boundp 'old-fullscreen) old-fullscreen nil)
+;; 	(progn (setq old-fullscreen current-value)
+;; 	  'fullboth)))))
+;; (global-set-key [f12] 'toggle-frame-fullscreen)
 #+END_SRC
 
 ** Ignored file extensions
@@ -128,6 +128,7 @@
 
 (mouse-avoidance-mode 'jump)         ; jump mouse away when typing
 (setq visible-bell nil)              ; turn off bip warnings
+(setq ring-bell-function 'ignore)    ; Annoying sounds
 (auto-compression-mode 1)            ; browse tar archives
 (put 'upcase-region 'disabled nil)   ; enable ``upcase-region''
 (put 'set-goal-column 'disabled nil) ; enable column positioning
@@ -136,7 +137,13 @@
 (fset 'yes-or-no-p 'y-or-n-p)        ; short-hand yes/no selection
 (ido-mode 1)                         ; interactive DO mode (better file opening and buffer switching)
 
-(setq-default indent-tabs-mode t)    ; tabs over spaces
+;; (setq default-tab-width 2)
+;; (setq-default c-basic-offset 2)
+;; (defvaralias 'c-basic-offset 'tab-width)
+;; (setq-default indent-tabs-mode t)    ; tabs over spaces
+(setq-default c-basic-offset 2
+							tab-width 2
+							indent-tabs-mode t)
 (delete-selection-mode +1)           ; type over a selected region, instead of deleting before typing.
 (add-to-list 'default-frame-alist '(fullscreen . maximized)) ; start full screen
 (global-auto-revert-mode t)          ; automatically reload buffers when file has changed
@@ -252,10 +259,10 @@
   :config
   (defun avy-goto-paren ()
     (interactive)
-    (avy--generic-jump "\\s(" nil 'pre))
+    (avy-jump "\\s(" nil 'pre))
   (defun avy-goto-conditional ()
     (interactive)
-    (avy--generic-jump "\\s(\\(if\\|cond\\|when\\|unless\\)\\b" nil 'pre))
+    (avy-jump "\\s(\\(if\\|cond\\|when\\|unless\\)\\b" nil 'pre))
   (setq avy-timeout-seconds 0.3)
   (setq avy-all-windows 'all-frames)
   (defun avy-action-copy-and-yank (pt)
@@ -286,7 +293,8 @@
   :ensure t
   :config
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  ;; (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this-symbol)
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
   (global-set-key (kbd "C-æ") 'mc/mark-next-like-this-word)
@@ -405,14 +413,19 @@ This only works if ispell is installed.
 	 ("C-+" . redo))
   :config
   (setq undo-tree-visualizer-diff 1)
-  (global-undo-tree-mode))
+  (global-undo-tree-mode)
+	;; Prevent undo tree files from polluting your git repo
+	(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo")))
+	)
 #+END_SRC
 
 * Coding
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
-  :config (show-paren-mode 1))
+  :config (show-paren-mode 1)
+	(setq show-paren-style 'expression)
+)
 #+END_SRC
 
 ** YASnippets
@@ -427,6 +440,7 @@ This only works if ispell is installed.
 
 ** LaTeX
 #+BEGIN_SRC emacs-lisp
+
 (use-package pdf-tools
   :ensure t
   :mode ("\\.pdf\\'" . pdf-tools-install)
@@ -438,9 +452,23 @@ This only works if ispell is installed.
   (setq mouse-wheel-follow-mouse t)
   (setq pdf-view-resize-factor 1.2)
   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+  (defun bms/pdf-midnite-green ()
+    "Set pdf-view-midnight-colors to green on black."
+    (interactive)
+    (setq pdf-view-midnight-colors '("#00B800" . "#000000" )) ; green 
+    (pdf-view-midnight-minor-mode)
+    )
+  (defun bms/pdf-midnite-amber ()
+    "Set pdf-view-midnight-colors to amber on dark slate blue."
+    (interactive)
+    (setq pdf-view-midnight-colors '("#ff9900" . "#0a0a12" )) ; amber
+    (pdf-view-midnight-minor-mode)
+    )
   (add-hook 'pdf-view-mode-hook (lambda() (linum-mode -1)
 				  (pdf-view-fit-page-to-window)
 				  (pdf-view-set-slice-from-bounding-box)))
+  ;; (add-hook 'pdf-view-mode-hook (lambda ()
+  ;; 				  (bms/pdf-midnite-amber))) ; automatically turns on midnight-mode for pdfs
   )
 
 (defun run-latex ()
@@ -454,8 +482,8 @@ This only works if ispell is installed.
   :mode ("\\.tex\\'" . latex-mode)
   ;; :diminish reftex-mode
   :bind (:map TeX-mode-map
-	("M-q" . ales/fill-paragraph)
-	("<C-return>" . run-latex))
+	      ("M-q" . ales/fill-paragraph)
+	      ("<C-return>" . run-latex))
   :config
   (setq TeX-auto-save t)
   (setq TeX-parse-self t)
@@ -463,7 +491,7 @@ This only works if ispell is installed.
   (setq-default TeX-master nil)
   (setq TeX-electric-sub-and-superscript t)
   (setq sentence-end-double-space nil)
-  (custom-set-variables '(LaTeX-command "latex -synctex=1"))
+  (custom-set-variables '(LaTeX-command "latex -synctex=1 -shell-escape"))
 
   (add-hook 'LaTeX-mode-hook
 	    (lambda ()
@@ -515,7 +543,54 @@ This only works if ispell is installed.
 		))))
       ;; otherwise do ordinary fill paragraph
       (fill-paragraph P)))
-)
+  )
+
+;; (use-package auctex-latexmk ;Use latexmk
+;;   :ensure t
+;;   :config
+;;   (auctex-latexmk-setup)
+;;   (setq auctex-latexmk-inherit-TeX-PDF-mode t))
+
+(defcustom TeX-texify-Show nil "Start view-command at end of TeX-texify?" :type 'boolean :group 'TeX-command)
+(defcustom TeX-texify-max-runs-same-command 5 "Maximal run number of the same command" :type 'integer :group 'TeX-command)
+
+(defun TeX-texify-sentinel (&optional proc sentinel)
+  "Non-interactive! Call the standard-sentinel of the current LaTeX-process.
+If there is still something left do do start the next latex-command."
+  (set-buffer (process-buffer proc))
+  (funcall TeX-texify-sentinel proc sentinel)
+  (let ((case-fold-search nil))
+    (when (string-match "\\(finished\\|exited\\)" sentinel)
+      (set-buffer TeX-command-buffer)
+      (unless (plist-get TeX-error-report-switches (intern (TeX-master-file)))
+        (TeX-texify)))))
+
+(defun TeX-texify ()
+  "Get everything done."
+  (interactive)
+  (let ((nextCmd (TeX-command-default (TeX-master-file)))
+        proc)
+    (if (and (null TeX-texify-Show)
+             (equal nextCmd TeX-command-Show))
+        (when  (called-interactively-p 'any)
+          (message "TeX-texify: Nothing to be done."))
+      (TeX-command nextCmd 'TeX-master-file)
+      (when (or (called-interactively-p 'any)
+                (null (boundp 'TeX-texify-count-same-command))
+                (null (boundp 'TeX-texify-last-command))
+                (null (equal nextCmd TeX-texify-last-command)))
+        (mapc 'make-local-variable '(TeX-texify-sentinel TeX-texify-count-same-command TeX-texify-last-command))
+        (setq TeX-texify-count-same-command 1))
+      (if (>= TeX-texify-count-same-command TeX-texify-max-runs-same-command)
+          (message "TeX-texify: Did %S already %d times. Don't want to do it anymore." TeX-texify-last-command TeX-texify-count-same-command)
+        (setq TeX-texify-count-same-command (1+ TeX-texify-count-same-command))
+        (setq TeX-texify-last-command nextCmd)
+        (and (null (equal nextCmd TeX-command-Show))
+             (setq proc (get-buffer-process (current-buffer)))
+             (setq TeX-texify-sentinel (process-sentinel proc))
+             (set-process-sentinel proc 'TeX-texify-sentinel))))))
+
+(provide 'TeX-texify)
 
 (use-package reftex
   :defer t
@@ -683,11 +758,6 @@ This only works if ispell is installed.
   (add-hook 'markdown-mode-hook 'flyspell-mode))
 #+END_SRC 
 
-*** Markdown custom preview
-#+BEGIN_SRC emacs-lisp
-(load-file "~/.emacs.d/md-preview.el")
-#+END_SRC 
-
 ** OCaml
 #+BEGIN_SRC emacs-lisp
 (use-package tuareg
@@ -734,6 +804,15 @@ This only works if ispell is installed.
 
 )
 
+#+END_SRC
+
+** Zwift Workouts
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.zwo\\'" . nxml-mode))
+#+END_SRC
+** Python
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "python3")
 #+END_SRC
 * Extras
 ** Functions
@@ -809,11 +888,12 @@ This only works if ispell is installed.
 		  (interactive)
 		  (join-line -1)))
 
-(global-set-key (kbd "<C-S-down>") 'move-line-down)
-(global-set-key (kbd "<C-S-up>") 'move-line-up)
+;; (global-set-key (kbd "C-S-down") 'move-line-down)
+;; (global-set-key (kbd "C-S-up") 'move-line-up)
 
-(global-set-key (kbd "<C-S-down>") 'move-line-down)
-(global-set-key (kbd "<C-S-up>") 'move-line-up)
+(global-set-key (kbd "C-S-D") 'delete-pair)
+;; (global-set-key (kbd "C-S-down") 'move-line-down)
+;; (global-set-key (kbd "C-S-up") 'move-line-up)
 (global-set-key (kbd "C-x y") 'string-insert-rectangle)
 
 (setq compilation-read-command nil)
@@ -861,6 +941,7 @@ This only works if ispell is installed.
 ** orgmode
 #+BEGIN_SRC emacs-lisp
 ;; fontify code in code blocks
+(setq org-html-validation-link nil)
 (setq org-src-fontify-natively t)
 (setq org-src-tab-acts-natively t)
 (setq org-src-preserve-indentation nil
@@ -888,4 +969,77 @@ This only works if ispell is installed.
 (provide dblp-mode)
 (add-hook 'bibtex-mode-hook 'dblp-mode)
 
+#+END_SRC
+
+** Grammarly
+#+BEGIN_SRC emacs-lisp
+;; (defun test-on-message (data)
+;; 		"On message callback with DATA."
+;; 		(message "[DATA] %s" data))
+
+;; (use-package grammarly
+;; 	:ensure t
+;; 	:config
+;; 	(add-to-list 'grammarly-on-message-function-list 'test-on-message)
+;;  )
+
+;; (grammarly-check-text "Hello World")
+
+(use-package flycheck-grammarly
+	:ensure t
+	:config
+	(with-eval-after-load 'flycheck
+		(flycheck-grammarly-setup))
+	(custom-set-variables
+	 '(flycheck-checker-error-threshold 1000)
+	 '(flycheck-grammarly-check-time 10.0)
+	 )
+	)
+
+(use-package flymake-grammarly
+	:ensure t
+	:config
+	(add-hook 'flymake-mode-hook 'flymake-grammarly-load)
+
+	(define-key flymake-mode-map (kbd "M-n") 'flymake-goto-next-error)
+	(define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
+
+
+	(custom-set-variables
+	 '(flymake-start-on-save-buffer nil)
+	 '(flycheck-grammarly-check-time 20.0)
+	 '(flymake-no-changes-timeout 20.0)
+	 )
+	)
+
+(defconst send-to-osx-grammarly-script-dir
+  (concat (file-name-directory load-file-name) "~/Documents/send-to-osx-grammarly/scripts/")
+  "Script path for package `send-to-osx-grammarly'.")
+
+(defun send-to-osx-grammarly--call (script)
+  "Call SCRIPT from script directory."
+  (call-process-shell-command (format "osascript %s%s" send-to-osx-grammarly-script-dir script)))
+
+;;;###autoload
+(defun send-to-osx-grammarly-push ()
+  "Save region to a tempfile and run Grammarly on it."
+  (interactive)
+  (kill-region (region-beginning) (region-end))
+  (send-to-osx-grammarly--call "push.scpt"))
+
+;;;###autoload
+(defun send-to-osx-grammarly-pull()
+  "Save region to a tempfile and run Grammarly on it."
+  (interactive)
+  (send-to-osx-grammarly--call "pull.scpt")
+  (yank))
+
+(define-key global-map (kbd "C-c h") #'send-to-osx-grammarly-push)
+(define-key global-map (kbd "C-c l") #'send-to-osx-grammarly-pull)
+
+;; (use-package lsp-grammarly
+;;   :ensure t
+;;   :hook (text-mode . (lambda ()
+;;                        (require 'lsp-grammarly)
+;;                        (lsp))))  ; or lsp-deferred
 #+END_SRC
