@@ -268,6 +268,8 @@
        (?b aw-switch-buffer " Ace - Switch Buffer")
        (?o delete-other-windows))))
 
+(setq-default word-wrap t)
+
 (use-package all-the-icons) ; 'M-x all-the-icons-install-fonts' to install resource fonts
 (use-package doom-themes
   :init
@@ -288,10 +290,10 @@
 
 (use-package company
   :config
-  (setq company-idle-delay 0
+  (setq company-idle-delay 0.0
 	company-echo-delay 0
 	company-dabbrev-downcase nil
-	company-minimum-prefix-length 3
+	company-minimum-prefix-length 1
 	ompany-tooltip-limit 20
 	company-selection-wrap-around t
 	company-transformers '(company-sort-by-occurrence
@@ -318,14 +320,15 @@
   (add-to-list 'popwin:special-display-config `("*Messages*" :height 0.5 :noselect t))
   (add-to-list 'popwin:special-display-config `("*Help*" :height 0.5 :noselect nil))
   (add-to-list 'popwin:special-display-config `("*Backtrace*" :height 0.5))
-  (add-to-list 'popwin:special-display-config `("*Compile-Log*" :height 0.5 :noselect t))
+  (add-to-list 'popwin:special-display-config `("*Compile-Log*" :width 0.5 :noselect t :position right))
   (add-to-list 'popwin:special-display-config `("*Remember*" :height 0.5))
   (add-to-list 'popwin:special-display-config `("*ansi-term*" :height 0.5 :position top))
   (add-to-list 'popwin:special-display-config `("*All*" :height 0.5))
   (add-to-list 'popwin:special-display-config `("*Go Test*" :height 0.3))
   (add-to-list 'popwin:special-display-config `("*Slack -" :regexp t :height 0.5 :position bottom))
-  (add-to-list 'popwin:special-display-config `(flycheck-error-list-mode :height 0.5 :regexp t :position bottom))
+  (add-to-list 'popwin:special-display-config `(flycheck-error-list-mode :height 0.2 :regexp t :position bottom :stick t))
   (add-to-list 'popwin:special-display-config `("*compilation*" :width 0.5 :position right))
+  (add-to-list 'popwin:special-display-config `(magit-mode :width 0.5 :position right))
   (popwin-mode 1))
 
 (add-hook 'text-mode-hook 'flyspell-mode)
@@ -404,11 +407,10 @@
   (setq-default TeX-master nil)
   (setq TeX-electric-sub-and-superscript t)
   (setq sentence-end-double-space nil)
-  (custom-set-variables '(LaTeX-command "latex -synctex=1 -shell-escape"))
-
+  ;; (custom-set-variables '(LaTeX-command "latex -synctex=1 -shell-escape"))
+  (custom-set-variables '(TeX-command-extra-options "-synctex=1 -shell-escape"))
   (add-hook 'LaTeX-mode-hook
 	    (lambda ()
-	      ;; (local-set-key (kbd "<C-return>") (lambda () (Tex-command-menu "LaTeX"))) 
 	      (company-mode)
 	      ;; (visual-line-mode)
 	      (flyspell-mode)
@@ -835,7 +837,7 @@ If there is still something left do do start the next latex-command."
 		(flycheck-grammarly-setup))
 	(custom-set-variables
 	 '(flycheck-checker-error-threshold 1000)
-	 '(flycheck-grammarly-check-time 10.0)
+	 '(flycheck-grammarly-check-time 1.0)
 	 )
 	)
 
@@ -880,26 +882,15 @@ If there is still something left do do start the next latex-command."
 (define-key global-map (kbd "C-c h") #'send-to-osx-grammarly-push)
 (define-key global-map (kbd "C-c l") #'send-to-osx-grammarly-pull)
 
-;; (use-package lsp-grammarly
-;;   :ensure t
-;;   :hook (text-mode . (lambda ()
-;;                        (require 'lsp-grammarly)
-;;                        (lsp))))  ; or lsp-deferred
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(flycheck-checker-error-threshold 1000)
- '(flycheck-grammarly-check-time 10.0)
- '(haskell-process-log t)
- '(haskell-process-suggest-hoogle-imports t)
- '(haskell-process-suggest-remove-import-lines t)
- '(package-selected-packages
-	 '(flymake-grammarly flycheck-grammarly use-package undo-tree tuareg sml-mode smartparens slime rust-mode proof-general popwin pdf-tools neotree multiple-cursors magit langtool idris-mode haskell-mode go-mode exec-path-from-shell elisp-slime-nav edit-server doom-themes counsel company-coq cargo biblio auctex all-the-icons ace-window)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ivy-current-match ((((class color) (background light)) :background "red" :foreground "white") (((class color) (background dark)) :background "#610000" :foreground "#8a2720"))))
+(use-package lsp-grammarly
+  :ensure t
+  :hook (text-mode . (lambda ()
+                       (require 'lsp-grammarly)
+                       (lsp))))  ; or lsp-deferred
+(use-package lsp-ltex
+  :ensure t
+  :hook (text-mode . (lambda ()
+                       (require 'lsp-ltex)
+                       (lsp)))  ; or lsp-deferred
+  :init
+  (setq lsp-ltex-version "16.0.0"))  ; make sure you have set this, see below
