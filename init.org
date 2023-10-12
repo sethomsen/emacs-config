@@ -950,6 +950,8 @@ If there is still something left do do start the next latex-command."
 (setq org-src-tab-acts-natively t)
 (setq org-src-preserve-indentation nil
       org-edit-src-content-indentation 0)
+(setq-default org-display-custom-times t)
+(setq org-time-stamp-custom-formats '(" %a <%d/%m-%Y>" . "<%d.%m.%Y %a %H:%M>"))
 
 ;; (use-package htmlize)
 ;; (require 'org)
@@ -1041,16 +1043,115 @@ If there is still something left do do start the next latex-command."
 (define-key global-map (kbd "C-c h") #'send-to-osx-grammarly-push)
 (define-key global-map (kbd "C-c l") #'send-to-osx-grammarly-pull)
 
-(use-package lsp-grammarly
-  :ensure t
-  :hook (text-mode . (lambda ()
-                       (require 'lsp-grammarly)
-                       (lsp))))  ; or lsp-deferred
-(use-package lsp-ltex
-  :ensure t
-  :hook (text-mode . (lambda ()
-                       (require 'lsp-ltex)
-                       (lsp)))  ; or lsp-deferred
-  :init
-  (setq lsp-ltex-version "16.0.0"))  ; make sure you have set this, see below
+;; (use-package lsp-grammarly
+;;   :ensure t
+;;   :hook (text-mode . (lambda ()
+;;                        (require 'lsp-grammarly)
+;;                        (lsp))))  ; or lsp-deferred
+;; (use-package lsp-ltex
+;;   :ensure t
+;;   :hook (text-mode . (lambda ()
+;;                        (require 'lsp-ltex)
+;;                        (lsp)))  ; or lsp-deferred
+;;   :init
+;;   (setq lsp-ltex-version "16.0.0"))  ; make sure you have set this, see below
 #+END_SRC
+
+** Flycheck 
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :ensure t
+  :mode ("\\.tex\\'" . flycheck-mode)
+	)
+
+(flycheck-define-checker tex-textidote
+  "A LaTeX grammar/spelling checker using textidote.
+  See https://github.com/sylvainhalle/textidote"
+  :modes (latex-mode plain-tex-mode)
+  :command ("java" "-jar" (eval (expand-file-name "/opt/homebrew/Cellar/textidote/0.8.3/libexec/textidote.jar"))
+            "--read-all"
+            "--output" "singleline"
+            "--no-color"
+            "--check"   (eval (if ispell-current-dictionary (substring ispell-current-dictionary 0 2) "en"))
+            ;; Try to honor local aspell dictionary and replacements if they exist
+            "--dict"    (eval (expand-file-name "~/.emacs.d/textidote-dict.txt"))
+            ;; "--dict"    (eval (expand-file-name "~/.aspell.en.pws"))
+            "--replace" (eval (expand-file-name "~/.aspell.en.prepl"))
+            ;; Using source ensures that a single temporary file in a different dir is created
+            ;; such that textidote won't process other files. This serves as a hacky workaround for
+            ;; https://github.com/sylvainhalle/textidote/issues/200.
+            source)
+  :error-patterns ((warning line-start (file-name)
+                            "(L" line "C" column "-" (or (seq "L" end-line "C" end-column) "?") "): "
+                            (message (one-or-more (not "\""))) (one-or-more not-newline) line-end)))
+(add-to-list 'flycheck-checkers 'tex-textidote)
+#+END_SRC
+
+
+** LSP/java
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-mode
+  :ensure t
+  :hook ((lsp-mode . lsp-enable-which-key-integration))
+  :commands lsp
+	:config
+	(setq lsp-diagnostics-provider :none)
+)
+
+(use-package lsp-ui)
+(use-package which-key :config (which-key-mode))
+(use-package dap-mode :after lsp-mode
+	:config (dap-auto-configure-mode)
+	:bind (("C-c d m" . dap-java-run-test-method)
+				 ("C-c d c" . dap-java-run-test-class)
+				 ("C-c d l" . dap-java-run-last-test)
+				 )
+)
+(use-package dap-java
+	:ensure nil
+	)
+(use-package hydra)
+
+(use-package lsp-treemacs)
+
+(add-hook 'compilation-filter-hook
+          (lambda () (ansi-color-apply-on-region (point-min) (point-max))))
+
+(use-package lsp-java
+	:config (add-hook 'java-mode-hook 'lsp)
+	:bind (("M-æ g i"     . lsp-find-implementation)
+				 ("M-æ g r"     . lsp-find-references)
+				 )
+)
+
+#+END_SRC
+
+#+RESULTS:
+: lsp-find-references
+
+** Counsel-etags
+#+BEGIN_SRC emacs-lisp
+(use-package counsel-etags
+  :ensure t
+  :bind (("C-]" . counsel-etags-find-tag-at-point))
+  :init
+  (add-hook 'prog-mode-hook
+        (lambda ()
+          (add-hook 'after-save-hook
+            'counsel-etags-virtual-update-tags 'append 'local)))
+  :config
+  (setq counsel-etags-update-interval 60)
+  (push "build" counsel-etags-ignore-directories))
+#+END_SRC
+
+** Z-tree
+#+BEGIN_SRC emacs-lisp
+;; ** recursive directory tree comparison: M-x ztree-diff
+(use-package ztree
+  :ensure t
+	:config
+	(setq ztree-diff-additional-options '("-w -u"))
+
+) ; needs GNU diff utility
+#+END_SRC
+
