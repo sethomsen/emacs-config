@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: LaTeX frac
+# type: snippet
+# key: frac
+# condition: (texmathp)
+# --
+\\frac{$1}{$2}$0
