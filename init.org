@@ -122,7 +122,7 @@
 (if (display-graphic-p)
     (progn
       (tool-bar-mode -1)             ; disable toolbar
-      ;; (menu-bar-mode -1)             ; disable menu bar
+      (menu-bar-mode -1)             ; disable menu bar
       (scroll-bar-mode -1)))         ; disable scroll bar
 (blink-cursor-mode 0)                ; disable blinking cursor
 
