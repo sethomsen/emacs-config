@@ -30,7 +30,7 @@
 (setq use-package-always-ensure t)
 
 (use-package exec-path-from-shell
-  :if (memq window-system '(mac ns))
+  :if (memq window-system '(mac ns x))
   :ensure t
   :config
   (exec-path-from-shell-initialize))
@@ -268,6 +268,7 @@
        (?b aw-switch-buffer " Ace - Switch Buffer")
        (?o delete-other-windows))))
 
+(setq-default fill-column 100)
 (setq-default word-wrap t)
 
 (use-package all-the-icons) ; 'M-x all-the-icons-install-fonts' to install resource fonts
@@ -361,11 +362,13 @@
   :ensure t
   :mode ("\\.pdf\\'" . pdf-tools-install)
   :bind (("C-c C-g" . pdf-sync-forward-search)
-	 ("C-s" . 'isearch-forward)
+				 ("C-s" . 'isearch-forward)
 	 )
   :defer t
   :config
+	(local-set-key (kbd "M-g g") ''pdf-view-goto-page)
   (setq mouse-wheel-follow-mouse t)
+	(setq pdf-view-use-scaling t)
   (setq pdf-view-resize-factor 1.2)
   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
   (defun bms/pdf-midnite-green ()
@@ -398,7 +401,7 @@
   :mode ("\\.tex\\'" . latex-mode)
   ;; :diminish reftex-mode
   :bind (:map TeX-mode-map
-	      ("M-q" . ales/fill-paragraph)
+	      ("C-q" . ales/fill-paragraph)
 	      ("<C-return>" . run-latex))
   :config
   (setq TeX-auto-save t)
@@ -754,12 +757,15 @@ If there is still something left do do start the next latex-command."
 ;; (global-set-key (kbd "C-S-down") 'move-line-down)
 ;; (global-set-key (kbd "C-S-up") 'move-line-up)
 
+(global-set-key (kbd "C-q") 'fill-paragraph)
 (global-set-key (kbd "C-S-D") 'delete-pair)
 ;; (global-set-key (kbd "C-S-down") 'move-line-down)
 ;; (global-set-key (kbd "C-S-up") 'move-line-up)
 (global-set-key (kbd "C-x y") 'string-insert-rectangle)
 
 (setq compilation-read-command nil)
+
+(global-set-key (kbd "M-!") 'ispell-word)
 
 (global-set-key (kbd "C-c m") 'compile)
 (global-set-key (kbd "M-*") 'pop-tag-mark)
@@ -803,13 +809,40 @@ If there is still something left do do start the next latex-command."
 (setq-default org-display-custom-times t)
 (setq org-time-stamp-custom-formats '(" %a <%d/%m-%Y>" . "<%d.%m.%Y %a %H:%M>"))
 
-;; (use-package htmlize)
-;; (require 'org)
-;; (require 'ox-latex)
-;; (setq org-latex-pdf-process
-;;       '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-;;         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-;;         "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+(defun my-org-mode-customizations ()
+  "My custom keybindings and configurations for Org mode."
+  (local-set-key (kbd "C-c C-j") 'org-insert-item)
+  (local-set-key (kbd "C-c a") 'org-agenda)
+)
+
+(add-hook 'org-mode-hook 'my-org-mode-customizations)
+
+;; TODO keywords.
+(setq org-todo-keywords
+  '((sequence "TODO(t)" "PROG(p)" "DONE(d)")))
+
+;; Show the daily agenda by default.
+(setq org-agenda-span 'day)
+
+;; Hide tasks that are scheduled in the future.
+;; (setq org-agenda-todo-ignore-scheduled 'future)
+
+;; Use "second" instead of "day" for time comparison.
+;; It hides tasks with a scheduled time like "<2020-11-15 Sun 11:30>"
+(setq org-agenda-todo-ignore-time-comparison-use-seconds t)
+
+;; Hide the deadline prewarning prior to scheduled date.
+(setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
+
+;; Customized view for the daily workflow. (Command: "C-c a n")
+(setq org-agenda-custom-commands
+  '(("n" "Agenda / PROG / DONE"
+     ((agenda "" nil)
+      (todo "PROG" nil)
+      (todo "TODO" nil)
+     nil))))
+
+(setq org-agenda-files '("~/Documents/tasks.org"))
 
 (define-minor-mode dblp-mode
   "Provide shortcuts for quering dblp."
